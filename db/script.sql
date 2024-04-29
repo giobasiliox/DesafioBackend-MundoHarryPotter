@@ -1,4 +1,4 @@
-CREATE TABLE bruxo (
+CREATE TABLE bruxos (
     id SERIAL  PRIMARY KEY ,
     nome VARCHAR(100) NOT NULL,
     idade INT NOT NULL,
@@ -9,7 +9,7 @@ CREATE TABLE bruxo (
 );
 
 
-CREATE TABLE varinha (
+CREATE TABLE varinhas (
     id SERIAL  PRIMARY KEY ,
     material VARCHAR(100) NOT NULL,
     comprimento DECIMAL(10,2) NOT NULL,
@@ -21,6 +21,14 @@ CREATE TABLE varinha (
 
 
 -- Bruxos
+
+"nome": "Harry Potter",
+"idade": 17,
+"casahogwarts": "Grifinória",
+"habilidades": "Voo",
+"status_sangue": "Mestiço",
+"patrono": "Cervo"
+
 "nome": "Hermione Granger",
 "idade": 17,
 "casahogwarts": "Grifinória",

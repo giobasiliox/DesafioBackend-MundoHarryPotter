@@ -14,8 +14,8 @@ const pool = new Pool({
     user: 'postgres',
     host: 'localhost',
     database: 'desafiohp',
-    password: '811867', //mudar a senha para ds564 ou 811867
-    port: 5432, //mudar a porta para 7007 ou 5432   
+    password: 'ds564', //mudar a senha para ds564 ou 811867
+    port: 7007, //mudar a porta para 7007 ou 5432   
 });
 
 
@@ -36,9 +36,13 @@ app.post('/bruxo', async (req, res) => {
             return res.status(400).send({ mensagem: 'A Casa em Hogwarts deve ser válida: Grifinória, Sonserina, Corvinal, Lufa-Lufa. Escreva novamente corretamente.' });
         } else if (!statusValidos.includes(status_sangue)) {
             return res.status(400).send({ mensagem: 'O Status de Sangue deve ser válido: Puro, Mestiço, Trouxa. Escreva novamente corretamente.  ' });
+        } else if (idade === 0) {
+            return res.status(400).send({ mensagem: 'A idade não pode ser 0. Escreva novamente corretamente.' });
+        } else if (nome === '' || casahogwarts === '' || habilidades === '' || status_sangue === '') {
+            return res.status(400).send({ mensagem: 'Os campos não podem estar vazios. Escreva novamente corretamente.' });
         }
         else {
-            await pool.query('INSERT INTO bruxo (nome, idade, casahogwarts, habilidades, status_sangue, patrono) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *', [nome, idade, casahogwarts, habilidades, status_sangue, patrono]);
+            await pool.query('INSERT INTO bruxos (nome, idade, casahogwarts, habilidades, status_sangue, patrono) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *', [nome, idade, casahogwarts, habilidades, status_sangue, patrono]);
             res.status(201).send({ mensagem: 'Bruxo adicionada com sucesso 🧙🏻!' });
         }
 
@@ -50,7 +54,7 @@ app.post('/bruxo', async (req, res) => {
 
 app.get('/bruxo', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM bruxo');
+        const result = await pool.query('SELECT * FROM bruxos');
         res.json({
             total: result.rowCount,
             bruxos: result.rows,
@@ -64,7 +68,7 @@ app.get('/bruxo', async (req, res) => {
 app.get('/bruxo/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await pool.query('SELECT * FROM bruxo WHERE id = $1', [id]);
+        const result = await pool.query('SELECT * FROM bruxos WHERE id = $1', [id]);
         if (result.rowCount === 0) {
             res.status(404).send({ mensagem: 'Bruxo não encontrado' });
         } else {
@@ -79,7 +83,7 @@ app.get('/bruxo/:id', async (req, res) => {
 app.get('/bruxo/nome/:nome', async (req, res) => {
     try {
         const { nome } = req.params;
-        const result = await pool.query('SELECT * FROM bruxo WHERE nome = $1', [nome]);
+        const result = await pool.query('SELECT * FROM bruxos WHERE nome = $1', [nome]);
         if (result.rowCount === 0) {
             res.status(404).send({ mensagem: 'Bruxo não encontrado' });
         } else {
@@ -106,10 +110,14 @@ app.put('/bruxo/:id', async (req, res) => {
             return res.status(400).send({ mensagem: 'A Casa em Hogwarts deve ser válida: Grifinória, Sonserina, Corvinal, Lufa-Lufa. Escreva novamente corretamente.' });
         } else if (!statusValidos.includes(status_sangue)) {
             return res.status(400).send({ mensagem: 'O Status de Sangue deve ser válido: Puro, Mestiço, Trouxa. Escreva novamente corretamente.  ' });
+        }else if (idade === 0) {
+            return res.status(400).send({ mensagem: 'A idade não pode ser 0. Escreva novamente corretamente.' });
+        } else if (nome === '' || casahogwarts === '' || habilidades === '' || status_sangue === '' ) {
+            return res.status(400).send({ mensagem: 'Os campos não podem estar vazios. Escreva novamente corretamente.' });
         }
         else {
-            await pool.query('UPDATE bruxo SET nome = $1, idade = $2, casahogwarts = $3, habilidades = $4, status_sangue = $5, patrono = $6 WHERE id = $7 RETURNING *', [nome, idade, casahogwarts, habilidades, status_sangue, patrono, id]);
-            res.status(200).send({ mensagem: 'Bruxo atualizado com sucesso!' });
+            await pool.query('UPDATE bruxos SET nome = $1, idade = $2, casahogwarts = $3, habilidades = $4, status_sangue = $5, patrono = $6 WHERE id = $7 RETURNING *', [nome, idade, casahogwarts, habilidades, status_sangue, patrono, id]);
+            res.status(200).send({ mensagem: 'Bruxo atualizado com sucesso!'});
         }
     } catch (error) {
         console.error('Erro ao atualizar bruxo:', error);
@@ -120,7 +128,7 @@ app.put('/bruxo/:id', async (req, res) => {
 app.delete('/bruxo/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        await pool.query('DELETE FROM bruxo WHERE id = $1', [id]);
+        await pool.query('DELETE FROM bruxos WHERE id = $1', [id]);
         res.status(200).send({ mensagem: 'Bruxo removido com sucesso!' });
     } catch (error) {
         console.error('Erro ao remover bruxo:', error);
@@ -134,9 +142,16 @@ app.delete('/bruxo/:id', async (req, res) => {
 
 app.post('/varinha', async (req, res) => {
     try {
-        const { material, compimento, nucleo, data_fabricacao } = req.body;
-        await pool.query('INSERT INTO varinha (material, compimento, nucleo, data_fabricacao) VALUES ($1, $2, $3, $4) RETURNING *', [material, compimento, nucleo, data_fabricacao]);
+        const { material, comprimento, nucleo, data_fabricacao } = req.body;
+
+        if (material === '' || comprimento === '' || nucleo === '' || data_fabricacao === '') {
+            return res.status(400).send({ mensagem: 'Os campos não podem estar vazios. Escreva novamente corretamente.' });
+        } else if (comprimento < 10 || comprimento > 45) {
+            return res.status(400).send({ mensagem: 'O comprimento da varinha deve ser entre 20 e 45. Escreva novamente corretamente.' });
+        } else {
+        await pool.query('INSERT INTO varinhas (material, comprimento, nucleo, data_fabricacao) VALUES ($1, $2, $3, $4) RETURNING *', [material, comprimento, nucleo, data_fabricacao]);
         res.status(201).send({ mensagem: 'Varinha adicionada com sucesso 🪄!' });
+        }
     } catch (error) {
         console.error('Erro ao adicionar varinha:', error);
         res.status(500).send('Erro ao adicionar varinha');
@@ -145,7 +160,7 @@ app.post('/varinha', async (req, res) => {
 
 app.get('/varinha', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM varinha');
+        const result = await pool.query('SELECT * FROM varinhas');
         res.json({
             total: result.rowCount,
             varinhas: result.rows,
@@ -159,7 +174,7 @@ app.get('/varinha', async (req, res) => {
 app.get('/varinha/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await pool.query('SELECT * FROM varinha WHERE id = $1', [id]);
+        const result = await pool.query('SELECT * FROM varinhas WHERE id = $1', [id]);
         if (result.rowCount === 0) {
             res.status(404).send({ mensagem: 'Varinha não encontrada' });
         } else {
@@ -174,8 +189,8 @@ app.get('/varinha/:id', async (req, res) => {
 app.put('/varinha/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { material, compimento, nucleo, data_fabricacao } = req.body;
-        await pool.query('UPDATE varinha SET material = $1, compimento = $2, nucleo = $3, data_fabricacao = $4 WHERE id = $5 RETURNING *', [material, compimento, nucleo, data_fabricacao, id]);
+        const { material, comprimento, nucleo, data_fabricacao } = req.body;
+        await pool.query('UPDATE varinhas SET material = $1, comprimento = $2, nucleo = $3, data_fabricacao = $4 WHERE id = $5 RETURNING *', [material, comprimento, nucleo, data_fabricacao, id]);
         res.status(200).send({ mensagem: 'Varinha atualizada com sucesso!' });
     } catch (error) {
         console.error('Erro ao atualizar varinha:', error);
@@ -186,7 +201,7 @@ app.put('/varinha/:id', async (req, res) => {
 app.delete('/varinha/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        await pool.query('DELETE FROM varinha WHERE id = $1', [id]);
+        await pool.query('DELETE FROM varinhas WHERE id = $1', [id]);
         res.status(200).send({ mensagem: 'Varinha removido com sucesso!' });
     } catch (error) {
         console.error('Erro ao remover varinha:', error);
